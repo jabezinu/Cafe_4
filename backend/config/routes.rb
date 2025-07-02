@@ -1,10 +1,18 @@
 Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
+  # Employee routes
+  resources :employees, only: [:index, :show, :update, :destroy]
 
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
-  get "up" => "rails/health#show", as: :rails_health_check
+  # Comment routes
+  resources :comments, only: [:index, :create]
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  # Category routes
+  resources :categories, only: [:index, :create, :update, :destroy] do
+    resources :menus, only: [:index, :create]  # Nested routes for menus under categories
+  end
+
+  # Menu routes (top-level for show, update, destroy)
+  resources :menus, only: [:show, :update, :destroy] do
+    resources :ratings, only: [:index, :create]  # Nested ratings under menus
+    get "average_rating", on: :member  # Custom route for average rating
+  end
 end
