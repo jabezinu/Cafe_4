@@ -16,6 +16,6 @@ class CommentsController < ApplicationController
   private
 
   def comment_params
-    params.require(:comment).permit(:name, :phone, :comment, :is_anonymous)
+    params.require(:comment).permit(:name, :phone_no, :comment, :is_anonymous)
   end
 end
