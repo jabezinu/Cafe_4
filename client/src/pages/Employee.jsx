@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/employees';
+const API_URL = import.meta.env.VITE_API_URL + '/employees' ;
 
 const Employee = () => {
   const [employees, setEmployees] = useState([]);
