@@ -1,4 +1,5 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useState} from 'react';
+import axios from 'axios'; 
 
 const Comments = () => {
   const API_URL = import.meta.env.VITE_API_URL + '/comments';
@@ -11,7 +12,7 @@ const Comments = () => {
     const fetchComments = async () => {
       setLoading(true);
       try {
-        const response = await fetch(API_URL);
+        const response = await axios.get(API_URL);
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         setComments(data);
