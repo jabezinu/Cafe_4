@@ -35,6 +35,12 @@ class MenusController < ApplicationController
     head :no_content
   end
 
+  # GET /menus/out_of_stock
+  def out_of_stock
+    menus = Menu.where(out_of_stock: true).includes(:ratings)
+    render json: menus.as_json(methods: [:badge], include: { ratings: { only: :stars } })
+  end
+
   private
 
   def set_category

@@ -12,6 +12,9 @@ Rails.application.routes.draw do
 
   # Menu routes (top-level for show, update, destroy)
   resources :menus, only: [:show, :update, :destroy] do
+    collection do
+      get 'out_of_stock'  # Route for out-of-stock menus
+    end
     resources :ratings, only: [:index, :create]  # Nested ratings under menus
     get "average_rating", on: :member  # Custom route for average rating
   end
