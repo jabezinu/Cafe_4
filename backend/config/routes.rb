@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
   # Employee routes
-  resources :employees, only: [:index, :show, :update, :destroy]
+  resources :employees, only: [:index, :show, :create, :update, :destroy]
 
   # Comment routes
   resources :comments, only: [:index, :create]

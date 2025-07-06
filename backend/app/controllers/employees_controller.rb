@@ -9,6 +9,15 @@ class EmployeesController < ApplicationController
     render json: employee
   end
 
+  def create  # createEmployee
+    employee = Employee.new(employee_params)
+    if employee.save
+      render json: employee, status: :created
+    else
+      render json: { errors: employee.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
   def update  # updateEmployee
     employee = Employee.find(params[:id])
     if employee.update(employee_params)
