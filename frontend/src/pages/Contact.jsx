@@ -2,6 +2,9 @@ import React, { useState } from 'react'
 import axios from 'axios'
 
 const Contact = () => {
+
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const [form, setForm] = useState({
     name: '',
     phone: '',
@@ -60,7 +63,7 @@ const Contact = () => {
 
   return (
     <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Contact Us / Leave a Comment</h2>
+      <h2 className="text-2xl font-bold mb-4">Leave a Comment</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-4 flex items-center">
           <input
@@ -84,7 +87,6 @@ const Contact = () => {
             className={`border p-2 w-full rounded ${errors.name ? 'border-red-500' : ''}`}
             placeholder="Your Name"
           />
-          {errors.name && <div className="text-red-500 text-sm">{errors.name}</div>}
         </div>
         <div className="mb-4">
           <label className="block mb-1">Phone Number</label>
@@ -97,7 +99,6 @@ const Contact = () => {
             className={`border p-2 w-full rounded ${errors.phone ? 'border-red-500' : ''}`}
             placeholder="Your Phone Number"
           />
-          {errors.phone && <div className="text-red-500 text-sm">{errors.phone}</div>}
         </div>
         <div className="mb-4">
           <label className="block mb-1">Comment <span className="text-red-500">*</span></label>
@@ -110,7 +111,6 @@ const Contact = () => {
             rows={4}
             required
           />
-          {errors.comment && <div className="text-red-500 text-sm">{errors.comment}</div>}
         </div>
         {errors.submit && <div className="text-red-500 mb-2">{errors.submit}</div>}
         {success && <div className="text-green-600 mb-2">{success}</div>}
