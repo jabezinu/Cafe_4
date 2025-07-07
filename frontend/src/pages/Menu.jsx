@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import StarRating from '../component/StarRating'
+import useMenuStore from '../store/menuStore'
 
 const getAverageRating = (ratings) => {
   if (!ratings || ratings.length === 0) return 0;
@@ -10,50 +11,38 @@ const getAverageRating = (ratings) => {
 
 
 const Menu = () => {
-
   const API_URL = import.meta.env.VITE_API_URL;
 
   const [categories, setCategories] = useState([])
   const [selectedCategory, setSelectedCategory] = useState(null)
-  const [menus, setMenus] = useState([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [ratingSubmitting, setRatingSubmitting] = useState(false)
-  const [userRatings, setUserRatings] = useState({}) // { menuId: rating }
-  const [pendingRatings, setPendingRatings] = useState({}) // { menuId: rating }
+  const [userRatings, setUserRatings] = useState({})
+  const [pendingRatings, setPendingRatings] = useState({})
+
+  // Zustand store
+  const { menusByCategory, loading, error: menuError, fetchMenus, clearError } = useMenuStore()
 
   useEffect(() => {
     axios.get(`${API_URL}/categories`)
       .then(res => {
         setCategories(res.data)
-        setLoading(false)
         if (res.data.length > 0) setSelectedCategory(res.data[0].id)
       })
       .catch(() => {
         setError('Failed to fetch categories')
-        setLoading(false)
       })
   }, [])
 
   useEffect(() => {
     if (selectedCategory) {
-      setLoading(true)
-      axios.get(`${API_URL}/categories/${selectedCategory}/menus`)
-        .then(res => {
-          setMenus(res.data)
-          setLoading(false)
-        })
-        .catch(() => {
-          setError('Failed to fetch menu items')
-          setLoading(false)
-        })
+      fetchMenus(selectedCategory, API_URL)
     }
-  }, [selectedCategory])
+  }, [selectedCategory, API_URL, fetchMenus])
 
   const handleCategoryClick = (id) => {
     setSelectedCategory(id)
-    setMenus([])
-    setError(null)
+    clearError()
   }
 
   const handleStarClick = (menuId, stars) => {
@@ -68,10 +57,9 @@ const Menu = () => {
       .then(() => {
         setUserRatings(prev => ({ ...prev, [menuId]: stars }))
         setPendingRatings(prev => ({ ...prev, [menuId]: 0 }))
-        axios.get(`${API_URL}/categories/${selectedCategory}/menus`).then(res2 => {
-          setMenus(res2.data)
-          setRatingSubmitting(false)
-        })
+        // Refetch and update cache for this category
+        fetchMenus(selectedCategory, API_URL)
+        setRatingSubmitting(false)
       })
       .catch(() => {
         setError('Failed to submit rating')
@@ -80,7 +68,7 @@ const Menu = () => {
   }
 
   if (loading) return <div>Loading...</div>
-  if (error) return <div className="text-red-500">{error}</div>
+  if (error || menuError) return <div className="text-red-500">{error || menuError}</div>
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -99,8 +87,8 @@ const Menu = () => {
       </ul>
       <h3 className="text-xl font-semibold mb-2">Menu Items</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {menus.length === 0 && <div className="col-span-2 text-gray-500">No menu items found for this category.</div>}
-        {menus.map(menu => (
+        {(menusByCategory[selectedCategory]?.menus?.length === 0) && <div className="col-span-2 text-gray-500">No menu items found for this category.</div>}
+        {(menusByCategory[selectedCategory]?.menus || []).map(menu => (
           <div key={menu.id} className="border rounded-lg p-4 bg-white shadow flex flex-col items-center">
             {menu.image && <img src={menu.image} alt={menu.name} className="w-32 h-32 object-cover rounded mb-2" />}
             <div className="font-bold text-lg mb-1">{menu.name}</div>
