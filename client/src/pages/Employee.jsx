@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL + '/employees' ;
+const API_URL = import.meta.env.VITE_API_URL + '/employees';
 
 const Employee = () => {
   const [employees, setEmployees] = useState([]);
@@ -12,6 +12,9 @@ const Employee = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showFired, setShowFired] = useState(false);
 
   const positionOptions = [
     { value: '', label: 'Select Position' },
@@ -46,6 +49,7 @@ const Employee = () => {
   const handleEdit = (emp) => {
     setSelected(emp.id);
     setEditData(emp);
+    setShowEditModal(true);
   };
 
   const handleChange = (e) => {
@@ -65,6 +69,7 @@ const Employee = () => {
     try {
       await axios.put(`${API_URL}/${selected}`, editData);
       setSelected(null);
+      setShowEditModal(false);
       fetchEmployees();
     } catch {
       setError('Failed to update employee');
@@ -96,6 +101,7 @@ const Employee = () => {
     try {
       await axios.post(API_URL, newData);
       setNewData({ name: '', phone: '', image: '', description: '', salary: '', date_hired: '', position: '', table_assigned: '', working_hour: '', status: '' });
+      setShowAddModal(false);
       fetchEmployees();
     } catch {
       setError('Failed to create employee');
@@ -103,99 +109,158 @@ const Employee = () => {
     setLoading(false);
   };
 
+  const closeModals = () => {
+    setShowAddModal(false);
+    setShowEditModal(false);
+    setSelected(null);
+    setError('');
+  };
+
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Employees</h2>
-      {loading && <div>Loading...</div>}
-      {error && <div className="text-red-500">{error}</div>}
-      {/* Create Employee Form */}
-      <div className="mb-6 p-4 border rounded bg-gray-50">
-        <h3 className="font-semibold mb-2">Add New Employee</h3>
-        <div className="grid grid-cols-2 gap-2">
-          <input className="border p-1" name="name" placeholder="Name" value={newData.name} onChange={handleNewChange} required />
-          <input className="border p-1" name="phone" placeholder="Phone" value={newData.phone} onChange={handleNewChange} required />
-          <input className="border p-1" name="image" placeholder="Image URL" value={newData.image} onChange={handleNewChange} required />
-          <input className="border p-1" name="description" placeholder="Description" value={newData.description} onChange={handleNewChange} required />
-          <input className="border p-1" name="salary" placeholder="Salary" value={newData.salary} onChange={handleNewChange} required />
-          <input className="border p-1" name="date_hired" placeholder="Date Hired" value={newData.date_hired} onChange={handleNewChange} required />
-          <select className="border p-1" name="position" value={newData.position} onChange={handleNewChange} required>
-            {positionOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-          </select>
-          <input className="border p-1" name="table_assigned" placeholder="Table Assigned (if waiter)" value={newData.table_assigned} onChange={handleNewChange} required />
-          <input className="border p-1" name="working_hour" placeholder="Working Hour" value={newData.working_hour} onChange={handleNewChange} required />
-          <select className="border p-1" name="status" value={newData.status} onChange={handleNewChange} required>
-            {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-          </select>
-        </div>
-        <button className="mt-2 bg-green-600 text-white px-4 py-1 rounded" onClick={handleCreate}>Create</button>
+    <div className="p-6 bg-gray-100 min-h-screen">
+      <h2 className="text-3xl font-bold mb-6 text-gray-800">Employee Management</h2>
+      {loading && <div className="mb-4 text-blue-500">Loading...</div>}
+      {error && <div className="mb-4 text-red-600 font-medium">{error}</div>}
+      <button
+        className="mb-8 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all"
+        onClick={() => { setShowAddModal(true); setError(''); }}
+      >
+        Add Employee
+      </button>
+      {/* Employee Cards */}
+      {(() => {
+        const activeEmployees = employees.filter(emp => emp.status !== 'fired');
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {activeEmployees.map((emp) => (
+              <div key={emp.id} className="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center">
+                <div className="w-20 h-20 mb-4">
+                  {emp.image ? (
+                    <img src={emp.image} alt="img" className="w-20 h-20 object-cover rounded-full" />
+                  ) : (
+                    <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">No Image</div>
+                  )}
+                </div>
+                <div className="w-full">
+                  <h3 className="text-lg font-semibold mb-1 text-gray-800">{emp.name}</h3>
+                  <div className="text-gray-600 text-sm mb-1">{emp.position} {emp.position === 'waiter' && emp.table_assigned ? `- Table: ${emp.table_assigned}` : ''}</div>
+                  <div className="text-gray-500 text-xs mb-2">Hired: {emp.date_hired}</div>
+                  <div className="mb-2 text-gray-700">{emp.description}</div>
+                  <div className="mb-1"><span className="font-medium">Phone:</span> {emp.phone}</div>
+                  <div className="mb-1"><span className="font-medium">Salary:</span> {emp.salary}</div>
+                  <div className="mb-1"><span className="font-medium">Working Hour:</span> {emp.working_hour}</div>
+                  <div className="mb-1"><span className="font-medium">Status:</span> {emp.status}</div>
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <button className="btn-blue" onClick={() => handleEdit(emp)}>Edit</button>
+                  <button className="btn-red" onClick={() => handleDelete(emp.id)}>Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+      {/* Toggle Fired Employees */}
+      <div className="flex flex-col items-center mt-8">
+        <button
+          className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-xl transition-all mb-4"
+          onClick={() => setShowFired(!showFired)}
+        >
+          {showFired ? 'Hide Fired Employees' : 'Show Fired Employees'}
+        </button>
+        {showFired && (() => {
+          const firedEmployees = employees.filter(emp => emp.status === 'fired');
+          if (firedEmployees.length === 0) {
+            return <div className="text-gray-500">No fired employees.</div>;
+          }
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full">
+              {firedEmployees.map((emp) => (
+                <div key={emp.id} className="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center opacity-70">
+                  <div className="w-20 h-20 mb-4">
+                    {emp.image ? (
+                      <img src={emp.image} alt="img" className="w-20 h-20 object-cover rounded-full" />
+                    ) : (
+                      <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">No Image</div>
+                    )}
+                  </div>
+                  <div className="w-full">
+                    <h3 className="text-lg font-semibold mb-1 text-gray-800">{emp.name}</h3>
+                    <div className="text-gray-600 text-sm mb-1">{emp.position} {emp.position === 'waiter' && emp.table_assigned ? `- Table: ${emp.table_assigned}` : ''}</div>
+                    <div className="text-gray-500 text-xs mb-2">Hired: {emp.date_hired}</div>
+                    <div className="mb-2 text-gray-700">{emp.description}</div>
+                    <div className="mb-1"><span className="font-medium">Phone:</span> {emp.phone}</div>
+                    <div className="mb-1"><span className="font-medium">Salary:</span> {emp.salary}</div>
+                    <div className="mb-1"><span className="font-medium">Working Hour:</span> {emp.working_hour}</div>
+                    <div className="mb-1"><span className="font-medium">Status:</span> {emp.status}</div>
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    <button className="btn-blue" onClick={() => handleEdit(emp)}>Edit</button>
+                    <button className="btn-red" onClick={() => handleDelete(emp.id)}>Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </div>
-      {/* Employee Table */}
-      <table className="min-w-full border">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border px-2 py-1">Name</th>
-            <th className="border px-2 py-1">Phone</th>
-            <th className="border px-2 py-1">Image</th>
-            <th className="border px-2 py-1">Description</th>
-            <th className="border px-2 py-1">Salary</th>
-            <th className="border px-2 py-1">Date Hired</th>
-            <th className="border px-2 py-1">Position</th>
-            <th className="border px-2 py-1">Table</th>
-            <th className="border px-2 py-1">Working Hour</th>
-            <th className="border px-2 py-1">Status</th>
-            <th className="border px-2 py-1">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {employees.map((emp) => (
-            <tr key={emp.id} className="border-b">
-              {selected === emp.id ? (
-                <>
-                  <td className="border px-2 py-1"><input name="name" value={editData.name || ''} onChange={handleChange} /></td>
-                  <td className="border px-2 py-1"><input name="phone" value={editData.phone || ''} onChange={handleChange} /></td>
-                  <td className="border px-2 py-1"><input name="image" value={editData.image || ''} onChange={handleChange} /></td>
-                  <td className="border px-2 py-1"><input name="description" value={editData.description || ''} onChange={handleChange} /></td>
-                  <td className="border px-2 py-1"><input name="salary" value={editData.salary || ''} onChange={handleChange} /></td>
-                  <td className="border px-2 py-1"><input name="date_hired" value={editData.date_hired || ''} onChange={handleChange} /></td>
-                  <td className="border px-2 py-1">
-                    <select name="position" value={editData.position || ''} onChange={handleChange} className="border p-1">
-                      {positionOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                    </select>
-                  </td>
-                  <td className="border px-2 py-1"><input name="table_assigned" value={editData.table_assigned || ''} onChange={handleChange} /></td>
-                  <td className="border px-2 py-1"><input name="working_hour" value={editData.working_hour || ''} onChange={handleChange} /></td>
-                  <td className="border px-2 py-1">
-                    <select name="status" value={editData.status || ''} onChange={handleChange} className="border p-1">
-                      {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                    </select>
-                  </td>
-                  <td className="border px-2 py-1">
-                    <button className="bg-green-500 text-white px-2 py-1 mr-2" onClick={handleUpdate}>Save</button>
-                    <button className="bg-gray-400 text-white px-2 py-1" onClick={() => setSelected(null)}>Cancel</button>
-                  </td>
-                </>
-              ) : (
-                <>
-                  <td className="border px-2 py-1">{emp.name}</td>
-                  <td className="border px-2 py-1">{emp.phone}</td>
-                  <td className="border px-2 py-1">{emp.image ? <img src={emp.image} alt="img" className="w-12 h-12 object-cover" /> : '-'}</td>
-                  <td className="border px-2 py-1">{emp.description}</td>
-                  <td className="border px-2 py-1">{emp.salary}</td>
-                  <td className="border px-2 py-1">{emp.date_hired}</td>
-                  <td className="border px-2 py-1">{emp.position}</td>
-                  <td className="border px-2 py-1">{emp.position === 'waiter' ? emp.table_assigned : '-'}</td>
-                  <td className="border px-2 py-1">{emp.working_hour}</td>
-                  <td className="border px-2 py-1">{emp.status}</td>
-                  <td className="border px-2 py-1">
-                    <button className="bg-blue-500 text-white px-2 py-1 mr-2" onClick={() => handleEdit(emp)}>Edit</button>
-                    <button className="bg-red-500 text-white px-2 py-1" onClick={() => handleDelete(emp.id)}>Delete</button>
-                  </td>
-                </>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Add Employee Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg relative">
+            <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl" onClick={closeModals}>&times;</button>
+            <h3 className="text-xl font-semibold mb-4 text-gray-700">Add New Employee</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input className="input" name="name" placeholder="Name" value={newData.name} onChange={handleNewChange} />
+              <input className="input" name="phone" placeholder="Phone" value={newData.phone} onChange={handleNewChange} />
+              <input className="input" name="image" placeholder="Image URL" value={newData.image} onChange={handleNewChange} />
+              <input className="input" name="description" placeholder="Description" value={newData.description} onChange={handleNewChange} />
+              <input className="input" name="salary" placeholder="Salary" value={newData.salary} onChange={handleNewChange} />
+              <input className="input" name="date_hired" placeholder="Date Hired" value={newData.date_hired} onChange={handleNewChange} />
+              <select className="input" name="position" value={newData.position} onChange={handleNewChange}>
+                {positionOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </select>
+              <input className="input" name="table_assigned" placeholder="Table Assigned (if waiter)" value={newData.table_assigned} onChange={handleNewChange} />
+              <input className="input" name="working_hour" placeholder="Working Hour" value={newData.working_hour} onChange={handleNewChange} />
+              <select className="input" name="status" value={newData.status} onChange={handleNewChange}>
+                {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </select>
+            </div>
+            <button className="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all" onClick={handleCreate}>
+              Create Employee
+            </button>
+          </div>
+        </div>
+      )}
+      {/* Edit Employee Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg relative">
+            <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl" onClick={closeModals}>&times;</button>
+            <h3 className="text-xl font-semibold mb-4 text-gray-700">Edit Employee</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input className="input" name="name" placeholder="Name" value={editData.name || ''} onChange={handleChange} />
+              <input className="input" name="phone" placeholder="Phone" value={editData.phone || ''} onChange={handleChange} />
+              <input className="input" name="image" placeholder="Image URL" value={editData.image || ''} onChange={handleChange} />
+              <input className="input" name="description" placeholder="Description" value={editData.description || ''} onChange={handleChange} />
+              <input className="input" name="salary" placeholder="Salary" value={editData.salary || ''} onChange={handleChange} />
+              <input className="input" name="date_hired" placeholder="Date Hired" value={editData.date_hired || ''} onChange={handleChange} />
+              <select className="input" name="position" value={editData.position || ''} onChange={handleChange}>
+                {positionOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </select>
+              <input className="input" name="table_assigned" placeholder="Table Assigned (if waiter)" value={editData.table_assigned || ''} onChange={handleChange} />
+              <input className="input" name="working_hour" placeholder="Working Hour" value={editData.working_hour || ''} onChange={handleChange} />
+              <select className="input" name="status" value={editData.status || ''} onChange={handleChange}>
+                {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </select>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <button className="btn-green" onClick={handleUpdate}>Save</button>
+              <button className="btn-gray" onClick={closeModals}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

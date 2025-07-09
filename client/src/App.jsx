@@ -8,15 +8,14 @@ import OutOfStock from './pages/OutOfStock'
 
 const App = () => {
   return (
-    <div>
-      <Navbar />
+    <Navbar>
       <Routes>
         <Route path="/" element={<Menu />} />
         <Route path="/employee" element={<Employee />} />
         <Route path="/comments" element={<Comments />} />
         <Route path="/out-of-stock" element={<OutOfStock />} />
       </Routes>
-    </div>
+    </Navbar>
   )
 }
 
