@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const API_URL = import.meta.env.VITE_API_URL + '/employees';
 
@@ -65,12 +67,19 @@ const Employee = () => {
       setError('Please fill in all fields');
       return;
     }
+    // Check for duplicate phone number (excluding the current employee)
+    const duplicate = employees.some(emp => emp.phone === editData.phone && emp.id !== selected);
+    if (duplicate) {
+      toast.error("Another employee with this phone number already exists", { position: "top-center" });
+      return;
+    }
     setLoading(true);
     try {
       await axios.put(`${API_URL}/${selected}`, editData);
       setSelected(null);
       setShowEditModal(false);
       fetchEmployees();
+      toast.success("Employee updated successfully", { position: "top-center" });
     } catch {
       setError('Failed to update employee');
     }
@@ -97,12 +106,19 @@ const Employee = () => {
       setError('Please fill in all fields');
       return;
     }
+    // Check for duplicate phone number
+    const duplicate = employees.some(emp => emp.phone === newData.phone);
+    if (duplicate) {
+      toast.error("An employee with this phone number already exists", { position: "top-center" });
+      return;
+    }
     setLoading(true);
     try {
       await axios.post(API_URL, newData);
       setNewData({ name: '', phone: '', image: '', description: '', salary: '', date_hired: '', position: '', table_assigned: '', working_hour: '', status: '' });
       setShowAddModal(false);
       fetchEmployees();
+      toast.success("Employee created successfully", { position: "top-center" });
     } catch {
       setError('Failed to create employee');
     }
@@ -129,7 +145,7 @@ const Employee = () => {
       </button>
       {/* Employee Cards */}
       {(() => {
-        const activeEmployees = employees.filter(emp => emp.status !== 'fired');
+        const activeEmployees = employees.filter(emp => emp.status =='active');
         return (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {activeEmployees.map((emp) => (
@@ -169,7 +185,7 @@ const Employee = () => {
           {showFired ? 'Hide Fired Employees' : 'Show Fired Employees'}
         </button>
         {showFired && (() => {
-          const firedEmployees = employees.filter(emp => emp.status === 'fired');
+          const firedEmployees = employees.filter(emp => emp.status !== 'active');
           if (firedEmployees.length === 0) {
             return <div className="text-gray-500">No fired employees.</div>;
           }
@@ -216,7 +232,7 @@ const Employee = () => {
               <input className="input" name="image" placeholder="Image URL" value={newData.image} onChange={handleNewChange} />
               <input className="input" name="description" placeholder="Description" value={newData.description} onChange={handleNewChange} />
               <input className="input" name="salary" placeholder="Salary" value={newData.salary} onChange={handleNewChange} />
-              <input className="input" name="date_hired" placeholder="Date Hired" value={newData.date_hired} onChange={handleNewChange} />
+              <input className="input" type="date" name="date_hired" placeholder="Date Hired" value={newData.date_hired} onChange={handleNewChange} />
               <select className="input" name="position" value={newData.position} onChange={handleNewChange}>
                 {positionOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
@@ -244,7 +260,7 @@ const Employee = () => {
               <input className="input" name="image" placeholder="Image URL" value={editData.image || ''} onChange={handleChange} />
               <input className="input" name="description" placeholder="Description" value={editData.description || ''} onChange={handleChange} />
               <input className="input" name="salary" placeholder="Salary" value={editData.salary || ''} onChange={handleChange} />
-              <input className="input" name="date_hired" placeholder="Date Hired" value={editData.date_hired || ''} onChange={handleChange} />
+              <input className="input" type="date" name="date_hired" placeholder="Date Hired" value={editData.date_hired || ''} onChange={handleChange} />
               <select className="input" name="position" value={editData.position || ''} onChange={handleChange}>
                 {positionOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
@@ -261,6 +277,7 @@ const Employee = () => {
           </div>
         </div>
       )}
+      <ToastContainer />
     </div>
   );
 };

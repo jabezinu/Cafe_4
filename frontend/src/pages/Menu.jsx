@@ -33,11 +33,11 @@ const Menu = () => {
 
   const [categories, setCategories] = useState([])
   const [selectedCategory, setSelectedCategory] = useState(null)
-  const [error, setError] = useState(null)
   const [ratingSubmitting, setRatingSubmitting] = useState(false)
   const [userRatings, setUserRatings] = useState({})
   const [pendingRatings, setPendingRatings] = useState({})
   const [confirmation, setConfirmation] = useState(null)
+  const [error, setError] = useState(null)
 
   // Zustand store
   const { menusByCategory, loading, error: menuError, fetchMenus, clearError } = useMenuStore()

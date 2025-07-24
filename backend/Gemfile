@@ -47,3 +47,7 @@ group :development, :test do
 end
 
 gem 'rack-cors'
+
+gem 'bcrypt'
+
+gem 'jwt'

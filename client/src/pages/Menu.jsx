@@ -35,6 +35,8 @@ const Menu = () => {
   // Add state for view modal and selected menu details
   const [showViewModal, setShowViewModal] = useState(false)
   const [viewMenuDetails, setViewMenuDetails] = useState(null)
+  const [newRating, setNewRating] = useState(5);
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
 
   useEffect(() => {
     fetchCategories()
@@ -151,12 +153,32 @@ const Menu = () => {
   const handleViewMenu = async (id) => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/menus/${id}`)
+      console.log('Fetched menu details:', response.data); // Debug log
       setViewMenuDetails(response.data)
       setShowViewModal(true)
+      setNewRating(5); // Reset rating when opening modal
     } catch (error) {
       console.error('Error fetching menu details:', error)
     }
   }
+
+  // Function to handle rating submission
+  const handleRatingSubmit = async (e) => {
+    e.preventDefault();
+    setRatingSubmitting(true);
+    try {
+      const postRes = await axios.post(`${import.meta.env.VITE_API_URL}/menus/${viewMenuDetails.id}/ratings`, {
+        rating: { stars: newRating }
+      });
+      console.log('Rating POST response:', postRes.data); // Debug log
+      // Re-fetch menu details to update ratings and average
+      await handleViewMenu(viewMenuDetails.id);
+      setNewRating(5); // Reset to default
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+    }
+    setRatingSubmitting(false);
+  };
 
   // For Add Category
   const openAddCategoryModal = () => {
@@ -438,6 +460,28 @@ const Menu = () => {
                 <p className="text-gray-700 text-sm">Number of ratings: {viewMenuDetails.ratings ? viewMenuDetails.ratings.length : 0}</p>
                 <p className="text-gray-700 text-sm">Average rating: {viewMenuDetails.ratings && viewMenuDetails.ratings.length > 0 ? (viewMenuDetails.ratings.reduce((sum, r) => sum + (r.stars || 0), 0) / viewMenuDetails.ratings.length).toFixed(2) : 'N/A'}</p>
               </div>
+              {/* Rating Submission Form */}
+              <form onSubmit={handleRatingSubmit} className="mt-4 flex items-center space-x-2">
+                <label htmlFor="rating" className="text-gray-700 font-medium">Rate this item:</label>
+                <select
+                  id="rating"
+                  value={newRating}
+                  onChange={e => setNewRating(Number(e.target.value))}
+                  className="border border-gray-300 rounded-md p-1"
+                  disabled={ratingSubmitting}
+                >
+                  {[1,2,3,4,5].map(star => (
+                    <option key={star} value={star}>{star} Star{star > 1 ? 's' : ''}</option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  className="bg-pink-500 text-white px-3 py-1 rounded-md font-semibold hover:bg-pink-600"
+                  disabled={ratingSubmitting}
+                >
+                  {ratingSubmitting ? 'Submitting...' : 'Submit'}
+                </button>
+              </form>
               {/* Other details if needed */}
             </div>
           ) : (
