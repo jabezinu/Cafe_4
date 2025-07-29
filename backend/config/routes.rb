@@ -1,4 +1,17 @@
 Rails.application.routes.draw do
+  # Authentication routes
+  namespace :api do
+    namespace :v1 do
+      post 'login', to: 'sessions#create'
+      resources :users, only: [:create] do
+        collection do
+          post 'update_password'
+          post 'update_phone_number'
+        end
+      end
+    end
+  end
+
   # Employee routes
   resources :employees, only: [:index, :show, :create, :update, :destroy]
 
